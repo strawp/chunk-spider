@@ -99,7 +99,7 @@ class JsFile( Resource ):
     
     # Look for chunk dicts e.g. 
     # {9:"26454eb9ee6ea13543d9",93:"45fc526fb568708f9e75",143:"2db0078a50b60395832c",147:"639b3f4b2cece83f1dc6",196:"1935d7ca83c8c9f78d35",357:"c1aa5f68360b6152eee8",388:"2adc4ed40e19b760d6be",524:"ca3102c97c465e7d5bb9",538:"4f19f7c83859794eec0b",559:"754996081bd3dfb26c53",657:"e4e1530c94a831b372f6",708:"e48e8422b639e111336a",841:"ab409098350a39745824",872:"03afec38607d98403ddf",895:"aa50b9bbf6c2234a2257",964:"55b95372a229e9114c93"}
-    chunkpattern = r'((\d+) *: *"([a-f0-9]{20}|[A-Z][a-z][a-zA-Z0-9]+)")+,?'
+    chunkpattern = r'((\d+) *: *"([a-f0-9]{20}|[a-z][a-zA-Z0-9]+)")+,?'
     self.chunks = [(x[1],x[2]) for x in re.findall(chunkpattern, self.content)]
     
     # Looks for something which could be a path
@@ -112,6 +112,17 @@ class JsFile( Resource ):
     rtn = []
     url = urlparse( self.url )
     dirname = os.path.dirname( url.path )
+    lookup = {}
+    for chunk in self.chunks:
+      if re.search(r'[a-f0-9]{20}',chunk[1]):
+        lookup[chunk[0]] = chunk[1]
+
+    print( lookup )
+    
+    for chunk in self.chunks:
+      if not re.search(r'[a-f0-9]{20}',chunk[1]) and chunk[0] in lookup:
+        self.chunks.append((chunk[1],lookup[chunk[0]]))
+    
     for chunk in self.chunks:
       dirname = url.scheme + '://' + url.netloc + os.path.dirname( url.path )
       rtn.append( dirname + '/' + chunk[0] + '.' + chunk[1] + '.js' )
